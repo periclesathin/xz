@@ -1,0 +1,35 @@
+name: Build and Dockerize xz
+
+on:
+  push:
+    branches:
+      - ino_dev
+
+jobs:
+  build-and-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Build dependencies
+        run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool
+
+      - name: Build xz
+        run: |
+          ./autogen.sh
+          ./configure
+          make
+
+      - name: Build Docker image
+        run: docker build -t xz-app .
+
+      - name: Save Docker image as artifact
+        run: docker save xz-app | gzip > xz-app.tar.gz
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: xz-docker-image
+          path: xz-app.tar.gz
